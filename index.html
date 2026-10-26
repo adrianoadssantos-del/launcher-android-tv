@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CleanTV Wi-Fi Launcher — Painel de Controle & Simulador</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background-color: #090d16; color: #f1f5f9; margin: 0; overflow-x: hidden; }
+    .tv-frame {
+      aspect-ratio: 16 / 9;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 0 6px #1e293b, 0 0 0 8px #334155;
+      transition: background 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .tv-card-focus:hover, .tv-card-selected {
+      transform: scale(1.06);
+      box-shadow: 0 12px 24px -6px rgba(56, 189, 248, 0.45), 0 0 0 3px #38bdf8;
+    }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.5); border-radius: 9999px; }
+    .wallpaper-aurora { background: radial-gradient(circle at 18% 20%, #0ea5e9 0%, transparent 45%), radial-gradient(circle at 85% 75%, #6366f1 0%, transparent 50%), linear-gradient(135deg, #020617 0%, #0f172a 60%, #1e1b4b 100%); }
+    .wallpaper-oled { background: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 75%); }
+    .wallpaper-forest { background: radial-gradient(circle at 20% 80%, #059669 0%, transparent 50%), radial-gradient(circle at 80% 20%, #0d9488 0%, transparent 45%), linear-gradient(160deg, #022c22 0%, #064e3b 50%, #0f172a 100%); }
+    .wallpaper-sunset { background: radial-gradient(circle at 80% 25%, #f97316 0%, transparent 45%), radial-gradient(circle at 20% 75%, #ec4899 0%, transparent 50%), linear-gradient(135deg, #1e1b4b 0%, #31102f 55%, #0f172a 100%); }
+    .wallpaper-cyber { background: radial-gradient(circle at 15% 25%, #d946ef 0%, transparent 45%), radial-gradient(circle at 85% 80%, #06b6d4 0%, transparent 45%), linear-gradient(135deg, #090d16 0%, #1e1b4b 50%, #082f49 100%); }
+    .wallpaper-carbon { background: repeating-linear-gradient(45deg, #0f172a 0px, #0f172a 10px, #111827 10px, #111827 20px); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">CleanTV Wi-Fi Launcher</h1>
+            <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Zero Anúncios</span>
+          </div>
+          <p class="text-xs text-slate-400">Painel Web Remoto via Wi-Fi &bull; Controle em Tempo Real da sua Android TV</p>
+        </div>
+      </div>
+
+      <!-- Connection Status & IP Bar -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <div class="flex items-center gap-2 bg-slate-800/90 border border-slate-700 rounded-lg px-3 py-1.5 text-xs">
+          <span id="connIndicator" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-300 font-medium">TV IP:</span>
+          <input id="tvIpInput" type="text" value="192.168.1.50:8080" class="bg-slate-900 text-sky-300 font-mono text-xs px-2 py-0.5 rounded border border-slate-700 w-36 focus:outline-none focus:border-sky-400" aria-label="IP da TV na rede Wi-Fi" />
+          <button id="btnSyncTv" type="button" class="px-2.5 py-1 rounded bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold transition">Sincronizar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto border-t border-slate-800/50 pt-1">
+      <button type="button" data-main-tab="control" class="main-tab-btn px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 border-sky-400 text-sky-400 transition whitespace-nowrap">
+        1. Painel Wi-Fi &amp; Tela da TV ao Vivo
+      </button>
+      <button type="button" data-main-tab="windows" class="main-tab-btn px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+        2. Instalador Windows &amp; Removedor de Anúncios
+      </button>
+      <button type="button" data-main-tab="guide" class="main-tab-btn px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+        3. Como Compilar o .APK e Instalar
+      </button>
+    </div>
+  </header>
+
+  <!-- Toast Feedback Banner -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 hidden max-w-sm bg-slate-900/95 border border-sky-500/50 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+    <span class="w-2.5 h-2.5 rounded-full bg-sky-400 shrink-0"></span>
+    <p id="toastText" class="text-xs sm:text-sm font-medium"></p>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: PAINEL WI-FI & SIMULADOR AO VIVO DA TV                       -->
+    <!-- =================================================================== -->
+    <section id="tab-control" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- Left Column: Live Android TV Screen Preview (7 cols on desktop) -->
+      <div class="lg:col-span-7 lg:sticky lg:top-28 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Simulador ao Vivo da Tela da TV</span>
+            <span class="text-[11px] text-slate-400">(Atualiza na hora conforme você edita ao lado)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="btnRemoteHome" type="button" class="px-2.5 py-1 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="Botão Home do Controle">
+              &#8962; Home
+            </button>
+            <button id="btnClearTvBanner" type="button" class="px-2.5 py-1 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+              Limpar Avisos
+            </button>
+          </div>
+        </div>
+
+        <!-- 16:9 Android TV Screen Frame -->
+        <div id="tvScreen" class="tv-frame rounded-2xl wallpaper-aurora flex flex-col justify-between p-5 sm:p-7 select-none">
+          <!-- Custom image background overlay -->
+          <div id="tvCustomBg" class="absolute inset-0 bg-cover bg-center pointer-events-none hidden"></div>
+          <!-- Dimmer overlay -->
+          <div id="tvDimOverlay" class="absolute inset-0 bg-slate-950/30 pointer-events-none transition-opacity"></div>
+
+          <!-- TV Top Bar: Clean Launcher Brand + Weather + Clock -->
+          <div class="relative z-10 flex items-start justify-between gap-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center">
+                <span class="text-sky-400 font-bold text-sm">TV</span>
+              </div>
+              <div>
+                <div id="tvHeaderTitle" class="text-sm sm:text-base font-bold text-white tracking-tight drop-shadow">Sala de Estar</div>
+                <div class="flex items-center gap-1.5 text-[10px] text-emerald-300 font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span id="tvWifiBadge">Wi-Fi Ativo &bull; Sem Anúncios</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Widgets: Weather & Clock -->
+            <div class="flex items-center gap-3">
+              <!-- Weather Widget -->
+              <div id="tvWeatherWidget" class="flex items-center gap-2 bg-slate-900/55 backdrop-blur-md border border-white/10 rounded-xl px-3 py-1.5">
+                <span id="tvWeatherIcon" class="text-lg">☀️</span>
+                <div class="text-right">
+                  <div class="text-xs sm:text-sm font-bold text-white leading-tight">
+                    <span id="tvWeatherTemp">26</span>°<span id="tvWeatherUnit">C</span>
+                  </div>
+                  <div id="tvWeatherCity" class="text-[10px] text-slate-300 leading-tight">São José dos Campos</div>
+                </div>
+              </div>
+
+              <!-- Clock Widget -->
+              <div id="tvClockWidget" class="bg-slate-900/55 backdrop-blur-md border border-white/10 rounded-xl px-3.5 py-1.5 text-right">
+                <div id="tvClockTime" class="text-sm sm:text-lg font-extrabold text-white tracking-tight leading-tight">19:45</div>
+                <div id="tvClockDate" class="text-[10px] text-slate-300 leading-tight">Seg, 26 Out</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TV Live Notification / Message / Link Banner (Hidden unless triggered) -->
+          <div id="tvLiveBanner" class="relative z-20 my-auto mx-auto w-full max-w-lg hidden">
+            <div class="bg-slate-900/95 backdrop-blur-xl border-2 border-sky-400 rounded-2xl p-4 shadow-2xl">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                  <span id="tvBannerIcon" class="text-2xl">💬</span>
+                  <div>
+                    <div id="tvBannerType" class="text-[10px] font-bold uppercase tracking-wider text-sky-400">Mensagem Recebida via Wi-Fi</div>
+                    <div id="tvBannerContent" class="text-sm sm:text-base font-bold text-white mt-0.5 break-words"></div>
+                  </div>
+                </div>
+                <button id="btnDismissBannerInside" type="button" class="text-xs px-2 py-1 rounded bg-slate-800 text-slate-300 hover:text-white">OK</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TV Center/Bottom Content: Categories & App Grid + Pinned Quick Links -->
+          <div class="relative z-10 mt-auto space-y-3">
+            <!-- Quick Links Pill Bar (if any) -->
+            <div id="tvQuickLinksRow" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scroll"></div>
+
+            <!-- Category Selector Pills -->
+            <div id="tvCategoriesRow" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scroll"></div>
+
+            <!-- Apps Grid on TV -->
+            <div id="tvAppsGrid" class="grid grid-cols-4 sm:grid-cols-5 gap-2.5 sm:gap-3 pt-1"></div>
+          </div>
+
+          <!-- TV Footer Status -->
+          <div class="relative z-10 flex items-center justify-between text-[10px] text-slate-300/80 pt-2 border-t border-white/10 mt-2">
+            <span>Painel Web: <strong id="tvFooterUrl" class="text-sky-300 font-mono">http://192.168.1.50:8080</strong></span>
+            <span id="tvVisibleCount">8 apps visíveis &bull; 0 anúncios</span>
+          </div>
+        </div>
+
+        <!-- D-Pad Remote Simulator Bar -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+          <div class="text-xs text-slate-400">
+            <strong class="text-slate-200">Teste o Controle Remoto da TV:</strong> Clique nas setas ou diretamente nos ícones da TV acima.
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="btnDpadLeft" type="button" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700">&larr; Esq</button>
+            <button id="btnDpadOk" type="button" class="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold">OK / Abrir</button>
+            <button id="btnDpadRight" type="button" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700">Dir &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Wi-Fi Control Sub-tabs & Editors (5 cols on desktop) -->
+      <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <!-- Control Sub-navigation -->
+        <div class="grid grid-cols-4 border-b border-slate-800 bg-slate-950/60 text-center">
+          <button type="button" data-sub-tab="apps" class="sub-tab-btn py-3 px-2 text-xs font-semibold border-b-2 border-sky-400 text-sky-400 transition">
+            Apps &amp; Ordem
+          </button>
+          <button type="button" data-sub-tab="wallpaper" class="sub-tab-btn py-3 px-2 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+            Papel de Parede
+          </button>
+          <button type="button" data-sub-tab="widgets" class="sub-tab-btn py-3 px-2 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+            Relógio &amp; Clima
+          </button>
+          <button type="button" data-sub-tab="cast" class="sub-tab-btn py-3 px-2 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+            Msg &amp; Links
+          </button>
+        </div>
+
+        <div class="p-4 sm:p-5">
+
+          <!-- SUB-TAB 1: APPS & CATEGORIAS -->
+          <div id="subtab-apps" class="space-y-4">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <h2 class="text-sm font-bold text-white">Organizar, Ordenar e Ocultar Apps</h2>
+                <p class="text-xs text-slate-400">Desative apps inúteis de fábrica e escolha a ordem exata na TV.</p>
+              </div>
+              <button id="btnShowAllApps" type="button" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 shrink-0">
+                Mostrar Todos
+              </button>
+            </div>
+
+            <!-- Category Filter & Creation -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-semibold text-slate-300">Modo de Exibição na TV:</label>
+                <button id="btnToggleCategoryBar" type="button" class="text-xs px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
+                  Abas de Categoria: Ativadas
+                </button>
+              </div>
+              <div class="flex gap-2">
+                <input id="newCategoryInput" type="text" placeholder="Nova categoria (ex: Esportes, Infantil)..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
+                <button id="btnAddCategory" type="button" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs shrink-0">
+                  + Categoria
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Custom App / Package -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-2">
+              <div class="text-xs font-semibold text-slate-300">Adicionar App Instalado na TV:</div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <input id="newAppName" type="text" placeholder="Nome (ex: SmartTube)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
+                <select id="newAppCategory" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400"></select>
+                <button id="btnAddApp" type="button" class="px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-xs">
+                  + Incluir App
+                </button>
+              </div>
+            </div>
+
+            <!-- App List Manager -->
+            <div id="appsManagerList" class="space-y-2 max-h-96 overflow-y-auto pr-1 custom-scroll"></div>
+          </div>
+
+          <!-- SUB-TAB 2: PAPEL DE PAREDE -->
+          <div id="subtab-wallpaper" class="space-y-4 hidden">
+            <div>
+              <h2 class="text-sm font-bold text-white">Papel de Parede e Visual Limpo</h2>
+              <p class="text-xs text-slate-400">Escolha um fundo OLED sem poluição visual ou envie sua própria foto pelo Wi-Fi.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" data-wp="wallpaper-aurora" class="wp-preset-btn p-3 rounded-xl border-2 border-sky-400 wallpaper-aurora text-left h-20 flex flex-col justify-end">
+                <span class="text-xs font-bold text-white drop-shadow">Aurora Boreal</span>
+              </button>
+              <button type="button" data-wp="wallpaper-oled" class="wp-preset-btn p-3 rounded-xl border border-slate-700 wallpaper-oled text-left h-20 flex flex-col justify-end">
+                <span class="text-xs font-bold text-white drop-shadow">OLED Preto Puro</span>
+              </button>
+              <button type="button" data-wp="wallpaper-forest" class="wp-preset-btn p-3 rounded-xl border border-slate-700 wallpaper-forest text-left h-20 flex flex-col justify-end">
+                <span class="text-xs font-bold text-white drop-shadow">Floresta Zen</span>
+              </button>
+              <button type="button" data-wp="wallpaper-sunset" class="wp-preset-btn p-3 rounded-xl border border-slate-700 wallpaper-sunset text-left h-20 flex flex-col justify-end">
+                <span class="text-xs font-bold text-white drop-shadow">Pôr do Sol Cinema</span>
+              </button>
+              <button type="button" data-wp="wallpaper-cyber" class="wp-preset-btn p-3 rounded-xl border border-slate-700 wallpaper-cyber text-left h-20 flex flex-col justify-end">
+                <span class="text-xs font-bold text-white drop-shadow">Neon Noturno</span>
+              </button>
+              <button type="button" data-wp="wallpaper-carbon" class="wp-preset-btn p-3 rounded-xl border border-slate-700 wallpaper-carbon text-left h-20 flex flex-col justify-end">
+                <span class="text-xs font-bold text-white drop-shadow">Fibra de Carbono</span>
+              </button>
+            </div>
+
+            <!-- Upload Image from PC/Phone or Paste URL -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-200 mb-1">Enviar Foto do seu Celular ou PC via Wi-Fi:</label>
+                <input id="wallpaperFileInput" type="file" accept="image/*" class="block w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-500 file:text-slate-950 hover:file:bg-sky-400 cursor-pointer" />
+              </div>
+
+              <div class="pt-2 border-t border-slate-800">
+                <label class="block text-xs font-semibold text-slate-200 mb-1">Ou usar link direto de uma imagem (URL):</label>
+                <div class="flex gap-2">
+                  <input id="wallpaperUrlInput" type="url" placeholder="https://exemplo.com/papel-de-parede.jpg" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
+                  <button id="btnApplyWallpaperUrl" type="button" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs">Aplicar</button>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-slate-800">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="text-slate-300 font-medium">Escurecimento do Fundo (Contraste dos Ícones):</span>
+                  <span id="dimValueLabel" class="text-sky-400 font-bold">30%</span>
+                </div>
+                <input id="dimRangeInput" type="range" min="0" max="80" value="30" class="w-full accent-sky-400" />
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-TAB 3: RELÓGIO & CLIMA -->
+          <div id="subtab-widgets" class="space-y-4 hidden">
+            <div>
+              <h2 class="text-sm font-bold text-white">Widgets de Relógio, Clima e Nome da TV</h2>
+              <p class="text-xs text-slate-400">Personalize o cabeçalho da sua Smart TV.</p>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Título / Cômodo da TV:</label>
+                <input id="tvRoomNameInput" type="text" value="Sala de Estar" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                <div>
+                  <div class="text-xs font-semibold text-slate-200">Mostrar Relógio e Data</div>
+                  <div class="text-[11px] text-slate-400">Exibe horário e dia da semana no topo direito</div>
+                </div>
+                <input id="toggleClockInput" type="checkbox" checked class="w-4 h-4 accent-sky-400 rounded cursor-pointer" />
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-slate-200">Formato 24 Horas</div>
+                  <div class="text-[11px] text-slate-400">Ex: 19:45 em vez de 07:45 PM</div>
+                </div>
+                <input id="toggle24hInput" type="checkbox" checked class="w-4 h-4 accent-sky-400 rounded cursor-pointer" />
+              </div>
+            </div>
+
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-slate-200">Widget de Clima na TV</div>
+                  <div class="text-[11px] text-slate-400">Mostra temperatura e condição atual</div>
+                </div>
+                <input id="toggleWeatherInput" type="checkbox" checked class="w-4 h-4 accent-sky-400 rounded cursor-pointer" />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-800">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Cidade:</label>
+                  <input id="weatherCityInput" type="text" value="São José dos Campos" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Temperatura Atual:</label>
+                  <div class="flex gap-1.5">
+                    <input id="weatherTempInput" type="number" value="26" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
+                    <select id="weatherUnitSelect" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+                      <option value="C">°C</option>
+                      <option value="F">°F</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Condição Climática:</label>
+                <select id="weatherIconSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                  <option value="☀️">☀️ Ensolarado / Céu Limpo</option>
+                  <option value="⛅">⛅ Parcialmente Nublado</option>
+                  <option value="🌧️">🌧️ Chuva</option>
+                  <option value="⛈️">⛈️ Tempestade</option>
+                  <option value="🌙">🌙 Noite Limpa</option>
+                </select>
+              </div>
+
+              <button id="btnUpdateWidgets" type="button" class="w-full py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs transition">
+                Salvar e Atualizar Relógio / Clima na TV
+              </button>
+            </div>
+          </div>
+
+          <!-- SUB-TAB 4: ENVIAR MENSAGENS & LINKS PARA A TV -->
+          <div id="subtab-cast" class="space-y-4 hidden">
+            <div>
+              <h2 class="text-sm font-bold text-white">Enviar Mensagens e Links para a TV</h2>
+              <p class="text-xs text-slate-400">Exiba avisos instantâneos na tela da TV ou abra vídeos/sites remotamente pelo Wi-Fi.</p>
+            </div>
+
+            <!-- Send Message Box -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+              <label class="block text-xs font-semibold text-sky-400">1. Exibir Mensagem / Aviso na Tela da TV:</label>
+              <textarea id="tvMessageInput" rows="2" placeholder="Ex: O jantar está pronto! / Senha do Wi-Fi: Casa2026" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-sky-400"></textarea>
+              <div class="flex gap-2">
+                <button id="btnSendTvMessage" type="button" class="flex-1 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs transition">
+                  Enviar Mensagem para a TV Agora
+                </button>
+              </div>
+            </div>
+
+            <!-- Send URL / Deep Link Box -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+              <label class="block text-xs font-semibold text-indigo-400">2. Abrir Link / Vídeo ou Fixar Atalho Rápido na TV:</label>
+              <input id="tvLinkTitleInput" type="text" placeholder="Nome do atalho (ex: Câmera da Garagem / Canal Ao Vivo)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-400" />
+              <input id="tvLinkUrlInput" type="url" placeholder="https://youtube.com/watch?v=... ou link de site/stream" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-400" />
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <button id="btnOpenLinkNow" type="button" class="py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs transition">
+                  Abrir na TV Agora
+                </button>
+                <button id="btnPinQuickLink" type="button" class="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 font-semibold text-xs transition">
+                  + Fixar na Tela Inicial
+                </button>
+              </div>
+            </div>
+
+            <!-- Saved Quick Links List -->
+            <div class="space-y-1.5">
+              <div class="text-xs font-semibold text-slate-300">Atalhos de Links Fixados na TV:</div>
+              <div id="quickLinksManagerList" class="space-y-1.5"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: INSTALADOR WINDOWS & REMOVEDOR DE ANÚNCIOS (ADB WI-FI)       -->
+    <!-- =================================================================== -->
+    <section id="tab-windows" class="hidden space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">Utilitário para Windows (.BAT)</span>
+            <h2 class="text-lg sm:text-xl font-bold text-white mt-2">Gerador do Instalador &amp; Removedor de Anúncios via Wi-Fi</h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-3xl">
+              Personalize abaixo o script para Windows que conecta na sua TV pelo Wi-Fi, instala o <code class="text-sky-300">CleanTVLauncher.apk</code> e desativa a tela original com anúncios e aplicativos inúteis de fábrica (sem precisar de root).
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button id="btnCopyBatScript" type="button" class="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs sm:text-sm transition">
+              Copiar Script .BAT
+            </button>
+            <button id="btnDownloadBatScript" type="button" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm transition">
+              Baixar Instalar_e_Limpar_TV.bat
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-sky-400">1. IP da sua Smart TV no Wi-Fi</label>
+            <input id="batTvIpInput" type="text" value="192.168.1.50" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white" />
+            <p class="text-[11px] text-slate-400">Você vê esse IP em: <em>Configurações da TV &rarr; Rede e Internet &rarr; Seu Wi-Fi</em>.</p>
+          </div>
+
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3 md:col-span-2">
+            <label class="block text-xs font-bold uppercase tracking-wider text-sky-400">2. O que você deseja remover/desativar na TV?</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              <label class="flex items-center gap-2.5 bg-slate-900 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                <input id="chkDisableStockLauncher" type="checkbox" checked class="accent-sky-400 w-4 h-4" />
+                <span><strong>Launcher Original com Anúncios</strong> (Google TV / Android TV Home)</span>
+              </label>
+              <label class="flex items-center gap-2.5 bg-slate-900 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                <input id="chkDisableRecommendations" type="checkbox" checked class="accent-sky-400 w-4 h-4" />
+                <span><strong>Banners Patrocinados e Sugestões</strong> (Android TV Recommendations)</span>
+              </label>
+              <label class="flex items-center gap-2.5 bg-slate-900 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                <input id="chkDisablePartnerCustomizer" type="checkbox" checked class="accent-sky-400 w-4 h-4" />
+                <span><strong>Canais Promocionais do Fabricante</strong> (Partner Customizer / Bloatware)</span>
+              </label>
+              <label class="flex items-center gap-2.5 bg-slate-900 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                <input id="chkDisableTelemetry" type="checkbox" checked class="accent-sky-400 w-4 h-4" />
+                <span><strong>Serviços de Rastreamento e Feedback</strong> (Google TV Bugreport / Legal)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Generated BAT Code -->
+        <div class="space-y-2">
+          <div class="text-xs font-semibold text-slate-300">Prévia do Script <code class="text-sky-300">Instalar_e_Limpar_TV.bat</code> (também incluído no arquivo .ZIP completo):</div>
+          <pre id="batScriptPreview" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-emerald-300 overflow-x-auto max-h-80 custom-scroll leading-relaxed"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: COMO COMPILAR O .APK E INSTALAR NA TV                        -->
+    <!-- =================================================================== -->
+    <section id="tab-guide" class="hidden space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-6">
+        <div>
+          <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Passo a Passo Simplificado</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white mt-2">Como colocar sua nova Launcher para rodar na Smart TV</h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            Todos os arquivos de código da Launcher Android (Kotlin + Servidor Web Wi-Fi) e o instalador do Windows já foram gerados no pacote <strong>CleanTV_WiFi_Launcher_Pacote_Completo.zip</strong>.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 font-bold flex items-center justify-center text-sm">1</div>
+            <h3 class="text-sm font-bold text-white">Gerar o arquivo .APK</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Extraia a pasta <code class="text-sky-300">AndroidTV_App_Project</code> do arquivo ZIP. Você pode subir os arquivos em um repositório gratuito no <strong>GitHub</strong> (o arquivo <code class="text-sky-300">.github/workflows/gerar-apk.yml</code> já compila o <code>CleanTVLauncher.apk</code> sozinho na aba <em>Actions</em>) ou abrir a pasta no <strong>Android Studio</strong> e clicar em <em>Build APK</em>.
+            </p>
+          </div>
+
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold flex items-center justify-center text-sm">2</div>
+            <h3 class="text-sm font-bold text-white">Ativar Depuração na TV e Rodar o .BAT</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Na sua Android TV, vá em <em>Configurações &rarr; Preferências do Dispositivo &rarr; Sobre</em> e clique 7 vezes em <strong>Compilação (Build)</strong>. Depois ative a <strong>Depuração USB / Rede</strong>. No Windows, coloque o <code>CleanTVLauncher.apk</code> junto do arquivo <code class="text-emerald-300">Instalar_e_Limpar_TV.bat</code> e dê dois cliques!
+            </p>
+          </div>
+
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-sm">3</div>
+            <h3 class="text-sm font-bold text-white">Acessar pelo Navegador via Wi-Fi</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Assim que a launcher abrir na TV, ela mostrará no rodapé o endereço <code class="text-sky-300">http://IP-DA-SUA-TV:8080</code>. Basta digitar esse endereço no navegador do celular ou do PC para abrir exatamente este painel e alterar tudo via Wi-Fi!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // -----------------------------------------------------------------------
+    // CleanTV Wi-Fi Launcher State
+    // -----------------------------------------------------------------------
+    const defaultState = {
+      roomName: "Sala de Estar",
+      tvIp: "192.168.1.50:8080",
+      wallpaperClass: "wallpaper-aurora",
+      customWallpaperData: "",
+      dimPercent: 30,
+      showCategoriesBar: true,
+      selectedCategory: "Todos",
+      categories: ["Todos", "Favoritos", "Streaming", "Música & Vídeo", "Jogos", "Utilitários"],
+      clock: {
+        enabled: true,
+        format24h: true
+      },
+      weather: {
+        enabled: true,
+        city: "São José dos Campos",
+        temp: 26,
+        unit: "C",
+        icon: "☀️"
+      },
+      selectedAppIndex: 0,
+      quickLinks: [
+        { id: "ql-1", title: "YouTube Ao Vivo", url: "https://www.youtube.com" },
+        { id: "ql-2", title: "Guia de Filmes", url: "https://www.justwatch.com/br" }
+      ],
+      apps: [
+        { id: "app-youtube", name: "YouTube", pkg: "com.google.android.youtube.tv", category: "Streaming", icon: "▶️", color: "from-red-600 to-rose-700", visible: true, favorite: true },
+        { id: "app-netflix", name: "Netflix", pkg: "com.netflix.ninja", category: "Streaming", icon: "🎬", color: "from-rose-700 to-red-900", visible: true, favorite: true },
+        { id: "app-prime", name: "Prime Video", pkg: "com.amazon.amazonvideo.livingroom", category: "Streaming", icon: "📺", color: "from-sky-500 to-blue-700", visible: true, favorite: true },
+        { id: "app-disney", name: "Disney+", pkg: "com.disney.disneyplus", category: "Streaming", icon: "✨", color: "from-blue-700 to-indigo-900", visible: true, favorite: false },
+        { id: "app-max", name: "Max", pkg: "com.wbd.stream", category: "Streaming", icon: "🎭", color: "from-indigo-600 to-purple-800", visible: true, favorite: false },
+        { id: "app-globoplay", name: "Globoplay", pkg: "com.globo.globotv", category: "Streaming", icon: "🌐", color: "from-orange-500 to-red-600", visible: true, favorite: false },
+        { id: "app-spotify", name: "Spotify", pkg: "com.spotify.tv.android", category: "Música & Vídeo", icon: "🎵", color: "from-emerald-500 to-green-700", visible: true, favorite: true },
+        { id: "app-stremio", name: "Stremio", pkg: "com.stremio.one", category: "Música & Vídeo", icon: "🟣", color: "from-purple-600 to-indigo-800", visible: true, favorite: false },
+        { id: "app-vlc", name: "VLC Player", pkg: "org.videolan.vlc", category: "Música & Vídeo", icon: "🔶", color: "from-amber-500 to-orange-700", visible: true, favorite: false },
+        { id: "app-geforce", name: "GeForce NOW", pkg: "com.nvidia.tegrazone3", category: "Jogos", icon: "🎮", color: "from-lime-500 to-emerald-700", visible: false, favorite: false },
+        { id: "app-files", name: "Arquivos TV", pkg: "com.ghisler.android.TotalCommander", category: "Utilitários", icon: "📁", color: "from-slate-600 to-slate-800", visible: true, favorite: false },
+        { id: "app-settings", name: "Configurações", pkg: "com.android.tv.settings", category: "Utilitários", icon: "⚙️", color: "from-slate-700 to-slate-900", visible: true, favorite: false }
+      ]
+    };
+
+    let state = JSON.parse(JSON.stringify(defaultState));
+
+    // Load saved state from localStorage safely
+    try {
+      const saved = localStorage.getItem("cleantv_wifi_state_v1");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        state = Object.assign({}, defaultState, parsed);
+      }
+    } catch (err) {
+      // Ignore storage restrictions in sandboxed environments
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem("cleantv_wifi_state_v1", JSON.stringify(state));
+      } catch (err) {
+        // Ignore storage restrictions
+      }
+      syncWithRealTvIfConnected();
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toastNotification");
+      const text = document.getElementById("toastText");
+      text.textContent = msg;
+      toast.classList.remove("hidden");
+      if (window._toastTimer) clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 3200);
+    }
+
+    // Optional real Wi-Fi sync when hosted inside the Android TV APK or connected on LAN
+    async function syncWithRealTvIfConnected() {
+      if (window.location.protocol === "http:" && window.location.port === "8080") {
+        try {
+          const endpoint = window.location.origin + "/api/state";
+          await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(state)
+          });
+        } catch (e) {
+          // Running in simulator mode
+        }
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Render TV Screen Simulator
+    // -----------------------------------------------------------------------
+    function getFilteredVisibleApps() {
+      return state.apps.filter(app => {
+        if (!app.visible) return false;
+        if (!state.showCategoriesBar || state.selectedCategory === "Todos") return true;
+        if (state.selectedCategory === "Favoritos") return app.favorite;
+        return app.category === state.selectedCategory;
+      });
+    }
+
+    function renderTvScreen() {
+      // Room title & IP
+      document.getElementById("tvHeaderTitle").textContent = state.roomName || "Minha Smart TV";
+      document.getElementById("tvFooterUrl").textContent = "http://" + (state.tvIp || "192.168.1.50:8080");
+
+      // Wallpaper & Dimmer
+      const tvScreen = document.getElementById("tvScreen");
+      const customBg = document.getElementById("tvCustomBg");
+      const presetClasses = [
+        "wallpaper-aurora", "wallpaper-oled", "wallpaper-forest",
+        "wallpaper-sunset", "wallpaper-cyber", "wallpaper-carbon"
+      ];
+      presetClasses.forEach(c => tvScreen.classList.remove(c));
+      tvScreen.classList.add(state.wallpaperClass || "wallpaper-aurora");
+
+      if (state.customWallpaperData) {
+        customBg.style.backgroundImage = `url('${state.customWallpaperData}')`;
+        customBg.classList.remove("hidden");
+      } else {
+        customBg.classList.add("hidden");
+      }
+
+      const dimOverlay = document.getElementById("tvDimOverlay");
+      dimOverlay.style.backgroundColor = `rgba(2, 6, 23, ${(state.dimPercent || 30) / 100})`;
+
+      // Clock widget
+      const clockWidget = document.getElementById("tvClockWidget");
+      if (state.clock.enabled) {
+        clockWidget.classList.remove("hidden");
+        const now = new Date();
+        let hours = now.getHours();
+        const mins = String(now.getMinutes()).padStart(2, "0");
+        let suffix = "";
+        if (!state.clock.format24h) {
+          suffix = hours >= 12 ? " PM" : " AM";
+          hours = hours % 12 || 12;
+        }
+        document.getElementById("tvClockTime").textContent = `${String(hours).padStart(2, "0")}:${mins}${suffix}`;
+        const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+        const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        document.getElementById("tvClockDate").textContent = `${dias[now.getDay()]}, ${now.getDate()} ${meses[now.getMonth()]}`;
+      } else {
+        clockWidget.classList.add("hidden");
+      }
+
+      // Weather widget
+      const weatherWidget = document.getElementById("tvWeatherWidget");
+      if (state.weather.enabled) {
+        weatherWidget.classList.remove("hidden");
+        document.getElementById("tvWeatherIcon").textContent = state.weather.icon;
+        document.getElementById("tvWeatherTemp").textContent = state.weather.temp;
+        document.getElementById("tvWeatherUnit").textContent = state.weather.unit;
+        document.getElementById("tvWeatherCity").textContent = state.weather.city;
+      } else {
+        weatherWidget.classList.add("hidden");
+      }
+
+      // Quick links row on TV
+      const qlRow = document.getElementById("tvQuickLinksRow");
+      qlRow.innerHTML = "";
+      if (state.quickLinks && state.quickLinks.length > 0) {
+        state.quickLinks.forEach(ql => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "px-2.5 py-1 rounded-full bg-indigo-500/25 hover:bg-indigo-500/40 border border-indigo-400/40 text-[11px] text-indigo-200 font-medium flex items-center gap-1.5 whitespace-nowrap transition";
+          btn.innerHTML = `<span>🔗</span><span>${ql.title}</span>`;
+          btn.addEventListener("click", () => {
+            triggerTvBanner("Link Rápido Aberto na TV", `${ql.title} (${ql.url})`, "🔗");
+          });
+          qlRow.appendChild(btn);
+        });
+      }
+
+      // Categories row on TV
+      const catRow = document.getElementById("tvCategoriesRow");
+      catRow.innerHTML = "";
+      if (state.showCategoriesBar) {
+        catRow.classList.remove("hidden");
+        state.categories.forEach(cat => {
+          const active = state.selectedCategory === cat;
+          const pill = document.createElement("button");
+          pill.type = "button";
+          pill.className = active
+            ? "px-3 py-1 rounded-full text-xs font-bold bg-sky-400 text-slate-950 shadow transition whitespace-nowrap"
+            : "px-3 py-1 rounded-full text-xs font-medium bg-slate-900/65 text-slate-200 hover:bg-slate-800 border border-white/10 transition whitespace-nowrap";
+          pill.textContent = cat === "Favoritos" ? "⭐ Favoritos" : cat;
+          pill.addEventListener("click", () => {
+            state.selectedCategory = cat;
+            state.selectedAppIndex = 0;
+            renderTvScreen();
+          });
+          catRow.appendChild(pill);
+        });
+      } else {
+        catRow.classList.add("hidden");
+      }
+
+      // Apps Grid on TV
+      const appsGrid = document.getElementById("tvAppsGrid");
+      appsGrid.innerHTML = "";
+      const visibleApps = getFilteredVisibleApps();
+
+      if (state.selectedAppIndex >= visibleApps.length) {
+        state.selectedAppIndex = Math.max(0, visibleApps.length - 1);
+      }
+
+      visibleApps.forEach((app, idx) => {
+        const isSelected = idx === state.selectedAppIndex;
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `tv-card-focus relative group rounded-xl p-3 bg-gradient-to-br ${app.color} flex flex-col justify-between h-20 sm:h-24 text-left transition-all ${isSelected ? "tv-card-selected" : "opacity-95 border border-white/15"}`;
+        card.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xl sm:text-2xl drop-shadow">${app.icon}</span>
+            ${app.favorite ? '<span class="text-[10px] bg-black/30 px-1.5 py-0.5 rounded text-amber-300">★</span>' : ''}
+          </div>
+          <div class="w-full">
+            <div class="text-xs sm:text-sm font-bold text-white truncate drop-shadow">${app.name}</div>
+            <div class="text-[9px] text-white/75 truncate">${app.category}</div>
+          </div>
+        `;
+        card.addEventListener("click", () => {
+          state.selectedAppIndex = idx;
+          renderTvScreen();
+          triggerTvBanner("Abrindo Aplicativo na TV", `${app.name} (${app.pkg})`, app.icon);
+        });
+        appsGrid.appendChild(card);
+      });
+
+      const totalVisible = state.apps.filter(a => a.visible).length;
+      document.getElementById("tvVisibleCount").textContent = `${totalVisible} apps ativos • 0 anúncios`;
+    }
+
+    function triggerTvBanner(typeLabel, contentText, iconChar) {
+      const banner = document.getElementById("tvLiveBanner");
+      document.getElementById("tvBannerType").textContent = typeLabel;
+      document.getElementById("tvBannerContent").textContent = contentText;
+      document.getElementById("tvBannerIcon").textContent = iconChar || "💬";
+      banner.classList.remove("hidden");
+    }
+
+    // -----------------------------------------------------------------------
+    // Render Right-Side Control Lists
+    // -----------------------------------------------------------------------
+    function renderCategoryDropdown() {
+      const select = document.getElementById("newAppCategory");
+      select.innerHTML = "";
+      state.categories.filter(c => c !== "Todos" && c !== "Favoritos").forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderAppsManagerList() {
+      const container = document.getElementById("appsManagerList");
+      container.innerHTML = "";
+
+      state.apps.forEach((app, index) => {
+        const row = document.createElement("div");
+        row.className = `flex items-center justify-between gap-2 p-2.5 rounded-xl border ${app.visible ? "bg-slate-950/80 border-slate-800" : "bg-slate-950/30 border-slate-800/50 opacity-60"}`;
+
+        const left = document.createElement("div");
+        left.className = "flex items-center gap-2.5 min-w-0";
+        left.innerHTML = `
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br ${app.color} flex items-center justify-center text-sm shrink-0">${app.icon}</div>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white truncate">${app.name}</div>
+            <div class="text-[10px] text-slate-400 truncate">${app.category} &bull; <span class="font-mono">${app.pkg}</span></div>
+          </div>
+        `;
+
+        const controls = document.createElement("div");
+        controls.className = "flex items-center gap-1 shrink-0";
+
+        // Favorite star button
+        const btnFav = document.createElement("button");
+        btnFav.type = "button";
+        btnFav.title = "Favoritar";
+        btnFav.className = `px-2 py-1 rounded text-xs border ${app.favorite ? "bg-amber-500/20 border-amber-500/40 text-amber-300" : "bg-slate-900 border-slate-700 text-slate-400"}`;
+        btnFav.textContent = "★";
+        btnFav.addEventListener("click", () => {
+          app.favorite = !app.favorite;
+          saveState();
+          renderAppsManagerList();
+          renderTvScreen();
+        });
+
+        // Move Up button
+        const btnUp = document.createElement("button");
+        btnUp.type = "button";
+        btnUp.title = "Subir posição";
+        btnUp.className = "px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs text-slate-200";
+        btnUp.textContent = "↑";
+        btnUp.addEventListener("click", () => {
+          if (index > 0) {
+            const temp = state.apps[index - 1];
+            state.apps[index - 1] = state.apps[index];
+            state.apps[index] = temp;
+            saveState();
+            renderAppsManagerList();
+            renderTvScreen();
+          }
+        });
+
+        // Move Down button
+        const btnDown = document.createElement("button");
+        btnDown.type = "button";
+        btnDown.title = "Descer posição";
+        btnDown.className = "px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs text-slate-200";
+        btnDown.textContent = "↓";
+        btnDown.addEventListener("click", () => {
+          if (index < state.apps.length - 1) {
+            const temp = state.apps[index + 1];
+            state.apps[index + 1] = state.apps[index];
+            state.apps[index] = temp;
+            saveState();
+            renderAppsManagerList();
+            renderTvScreen();
+          }
+        });
+
+        // Show / Hide toggle button
+        const btnVis = document.createElement("button");
+        btnVis.type = "button";
+        btnVis.className = app.visible
+          ? "px-2.5 py-1 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+          : "px-2.5 py-1 rounded text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30";
+        btnVis.textContent = app.visible ? "Visível" : "Oculto";
+        btnVis.addEventListener("click", () => {
+          app.visible = !app.visible;
+          saveState();
+          renderAppsManagerList();
+          renderTvScreen();
+          showToast(app.visible ? `${app.name} exibido na TV` : `${app.name} ocultado da TV`);
+        });
+
+        controls.appendChild(btnFav);
+        controls.appendChild(btnUp);
+        controls.appendChild(btnDown);
+        controls.appendChild(btnVis);
+
+        row.appendChild(left);
+        row.appendChild(controls);
+        container.appendChild(row);
+      });
+    }
+
+    function renderQuickLinksManager() {
+      const container = document.getElementById("quickLinksManagerList");
+      container.innerHTML = "";
+      if (!state.quickLinks || state.quickLinks.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 italic">Nenhum atalho fixado ainda.</div>`;
+        return;
+      }
+      state.quickLinks.forEach((ql, idx) => {
+        const item = document.createElement("div");
+        item.className = "flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-xs";
+        item.innerHTML = `
+          <div class="truncate pr-2">
+            <span class="font-semibold text-white">${ql.title}</span>
+            <span class="text-slate-400 font-mono ml-1">${ql.url}</span>
+          </div>
+        `;
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "text-rose-400 hover:text-rose-300 font-semibold shrink-0";
+        delBtn.textContent = "Remover";
+        delBtn.addEventListener("click", () => {
+          state.quickLinks.splice(idx, 1);
+          saveState();
+          renderQuickLinksManager();
+          renderTvScreen();
+        });
+        item.appendChild(delBtn);
+        container.appendChild(item);
+      });
+    }
+
+    // -----------------------------------------------------------------------
+    // Windows .BAT Script Generator
+    // -----------------------------------------------------------------------
+    function buildWindowsBatContent() {
+      const ip = (document.getElementById("batTvIpInput").value || "192.168.1.50").trim();
+      const disableStock = document.getElementById("chkDisableStockLauncher").checked;
+      const disableRecs = document.getElementById("chkDisableRecommendations").checked;
+      const disablePartner = document.getElementById("chkDisablePartnerCustomizer").checked;
+      const disableTelemetry = document.getElementById("chkDisableTelemetry").checked;
+
+      let cmds = [];
+      cmds.push("@echo off");
+      cmds.push("chcp 65001 >nul");
+      cmds.push("title CleanTV Wi-Fi Launcher - Instalador e Removedor de Anuncios");
+      cmds.push("echo ===================================================================");
+      cmds.push("echo   CLEANTV WI-FI LAUNCHER - INSTALADOR E LIMPADOR PARA ANDROID TV");
+      cmds.push("echo ===================================================================");
+      cmds.push("echo.");
+      cmds.push(`set TV_IP=${ip}`);
+      cmds.push("echo [1/4] Conectando na sua Smart TV via Wi-Fi (%TV_IP%:5555)...");
+      cmds.push("adb connect %TV_IP%:5555");
+      cmds.push("echo.");
+      cmds.push("echo [2/4] Instalando o CleanTVLauncher.apk na TV...");
+      cmds.push("if exist CleanTVLauncher.apk (");
+      cmds.push("    adb -s %TV_IP%:5555 install -r CleanTVLauncher.apk");
+      cmds.push(") else (");
+      cmds.push("    echo [AVISO] Coloque o arquivo CleanTVLauncher.apk nesta mesma pasta!");
+      cmds.push(")");
+      cmds.push("echo.");
+      cmds.push("echo [3/4] Removendo anuncios, recomendacoes patrocinadas e bloatware...");
+      if (disableStock) {
+        cmds.push("REM Desativa a Launcher original com anuncios (Google TV / Android TV Home)");
+        cmds.push("adb -s %TV_IP%:5555 shell pm disable-user --user 0 com.google.android.tvlauncher");
+        cmds.push("adb -s %TV_IP%:5555 shell pm disable-user --user 0 com.google.android.leanbacklauncher");
+      }
+      if (disableRecs) {
+        cmds.push("REM Desativa a barra de recomendacoes e banners patrocinados");
+        cmds.push("adb -s %TV_IP%:5555 shell pm disable-user --user 0 com.google.android.leanbacklauncher.recommendations");
+        cmds.push("adb -s %TV_IP%:5555 shell pm disable-user --user 0 com.google.android.tvrecommendations");
+      }
+      if (disablePartner) {
+        cmds.push("REM Desativa canais promocionais de parceiros/fabricante");
+        cmds.push("adb -s %TV_IP%:5555 shell pm disable-user --user 0 com.google.android.leanbacklauncher.partnercustomizer");
+        cmds.push("adb -s %TV_IP%:5555 shell pm disable-user --user 0 com.android.providers.partnerbookmarks");
+      }
+      if (disableTelemetry) {
+        cmds.push("REM Desativa telemetria e feedback de propaganda");
+        cmds.push("adb -s %TV_IP%:5555 shell pm disable-user --user 0 com.google.android.tv.bugreportsender");
+        cmds.push("adb -s %TV_IP%:5555 shell pm disable-user --user 0 com.google.android.feedback");
+      }
+      cmds.push("echo.");
+      cmds.push("echo [4/4] Definindo a CleanTV Wi-Fi Launcher como tela inicial padrao...");
+      cmds.push("adb -s %TV_IP%:5555 shell cmd package set-home-activity com.cleantv.wifilauncher/.MainActivity");
+      cmds.push("adb -s %TV_IP%:5555 shell input keyevent KEYCODE_HOME");
+      cmds.push("echo.");
+      cmds.push("echo ===================================================================");
+      cmds.push("echo   PRONTO! Sua TV esta limpa e sem anuncios.");
+      cmds.push("echo   Para configurar pelo navegador, acesse: http://%TV_IP%:8080");
+      cmds.push("echo ===================================================================");
+      cmds.push("pause");
+      return cmds.join("\r\n");
+    }
+
+    function updateBatPreview() {
+      const preview = document.getElementById("batScriptPreview");
+      if (preview) {
+        preview.textContent = buildWindowsBatContent();
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Wire All Event Listeners
+    // -----------------------------------------------------------------------
+    window.addEventListener("DOMContentLoaded", () => {
+      // Main Tabs
+      document.querySelectorAll(".main-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-main-tab");
+          document.querySelectorAll(".main-tab-btn").forEach(b => {
+            b.classList.remove("border-sky-400", "text-sky-400");
+            b.classList.add("border-transparent", "text-slate-400");
+          });
+          btn.classList.add("border-sky-400", "text-sky-400");
+          btn.classList.remove("border-transparent", "text-slate-400");
+
+          ["control", "windows", "guide"].forEach(tabId => {
+            const sec = document.getElementById("tab-" + tabId);
+            if (tabId === target) {
+              sec.classList.remove("hidden");
+            } else {
+              sec.classList.add("hidden");
+            }
+          });
+        });
+      });
+
+      // Sub Tabs (inside Control Panel)
+      document.querySelectorAll(".sub-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-sub-tab");
+          document.querySelectorAll(".sub-tab-btn").forEach(b => {
+            b.classList.remove("border-sky-400", "text-sky-400");
+            b.classList.add("border-transparent", "text-slate-400");
+          });
+          btn.classList.add("border-sky-400", "text-sky-400");
+          btn.classList.remove("border-transparent", "text-slate-400");
+
+          ["apps", "wallpaper", "widgets", "cast"].forEach(subId => {
+            const panel = document.getElementById("subtab-" + subId);
+            if (subId === target) {
+              panel.classList.remove("hidden");
+            } else {
+              panel.classList.add("hidden");
+            }
+          });
+        });
+      });
+
+      // Sync IP Button
+      document.getElementById("btnSyncTv").addEventListener("click", () => {
+        state.tvIp = document.getElementById("tvIpInput").value.trim() || "192.168.1.50:8080";
+        saveState();
+        renderTvScreen();
+        showToast("Configurações sincronizadas com http://" + state.tvIp);
+      });
+
+      // D-Pad & TV Screen controls
+      document.getElementById("btnDpadLeft").addEventListener("click", () => {
+        const visible = getFilteredVisibleApps();
+        if (visible.length > 0) {
+          state.selectedAppIndex = (state.selectedAppIndex - 1 + visible.length) % visible.length;
+          renderTvScreen();
+        }
+      });
+
+      document.getElementById("btnDpadRight").addEventListener("click", () => {
+        const visible = getFilteredVisibleApps();
+        if (visible.length > 0) {
+          state.selectedAppIndex = (state.selectedAppIndex + 1) % visible.length;
+          renderTvScreen();
+        }
+      });
+
+      document.getElementById("btnDpadOk").addEventListener("click", () => {
+        const visible = getFilteredVisibleApps();
+        const chosen = visible[state.selectedAppIndex];
+        if (chosen) {
+          triggerTvBanner("Abrindo Aplicativo na TV", `${chosen.name} (${chosen.pkg})`, chosen.icon);
+        }
+      });
+
+      document.getElementById("btnRemoteHome").addEventListener("click", () => {
+        state.selectedCategory = "Todos";
+        state.selectedAppIndex = 0;
+        document.getElementById("tvLiveBanner").classList.add("hidden");
+        renderTvScreen();
+        showToast("Tela inicial da TV focada");
+      });
+
+      document.getElementById("btnClearTvBanner").addEventListener("click", () => {
+        document.getElementById("tvLiveBanner").classList.add("hidden");
+      });
+
+      document.getElementById("btnDismissBannerInside").addEventListener("click", () => {
+        document.getElementById("tvLiveBanner").classList.add("hidden");
+      });
+
+      // Apps & Categories Controls
+      document.getElementById("btnShowAllApps").addEventListener("click", () => {
+        state.apps.forEach(a => { a.visible = true; });
+        saveState();
+        renderAppsManagerList();
+        renderTvScreen();
+        showToast("Todos os aplicativos estão visíveis na TV");
+      });
+
+      document.getElementById("btnToggleCategoryBar").addEventListener("click", (e) => {
+        state.showCategoriesBar = !state.showCategoriesBar;
+        e.currentTarget.textContent = state.showCategoriesBar
+          ? "Abas de Categoria: Ativadas"
+          : "Abas de Categoria: Ocultas";
+        saveState();
+        renderTvScreen();
+      });
+
+      document.getElementById("btnAddCategory").addEventListener("click", () => {
+        const input = document.getElementById("newCategoryInput");
+        const val = input.value.trim();
+        if (!val) return;
+        if (!state.categories.includes(val)) {
+          state.categories.push(val);
+          input.value = "";
+          saveState();
+          renderCategoryDropdown();
+          renderTvScreen();
+          showToast(`Categoria "${val}" adicionada à TV!`);
+        }
+      });
+
+      document.getElementById("btnAddApp").addEventListener("click", () => {
+        const nameInput = document.getElementById("newAppName");
+        const catSelect = document.getElementById("newAppCategory");
+        const name = nameInput.value.trim();
+        if (!name) {
+          showToast("Digite o nome do aplicativo para incluir.");
+          return;
+        }
+        const pkgSlug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+        state.apps.unshift({
+          id: "app-" + Date.now(),
+          name: name,
+          pkg: "com.tv.app." + pkgSlug,
+          category: catSelect.value || "Streaming",
+          icon: "📦",
+          color: "from-sky-600 to-indigo-800",
+          visible: true,
+          favorite: true
+        });
+        nameInput.value = "";
+        saveState();
+        renderAppsManagerList();
+        renderTvScreen();
+        showToast(`App "${name}" incluído na tela inicial!`);
+      });
+
+      // Wallpaper Controls
+      document.querySelectorAll(".wp-preset-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const wp = btn.getAttribute("data-wp");
+          state.wallpaperClass = wp;
+          state.customWallpaperData = "";
+          document.querySelectorAll(".wp-preset-btn").forEach(b => {
+            b.classList.remove("border-2", "border-sky-400");
+            b.classList.add("border", "border-slate-700");
+          });
+          btn.classList.remove("border", "border-slate-700");
+          btn.classList.add("border-2", "border-sky-400");
+          saveState();
+          renderTvScreen();
+          showToast("Papel de parede atualizado na TV!");
+        });
+      });
+
+      document.getElementById("wallpaperFileInput").addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.customWallpaperData = ev.target.result;
+          saveState();
+          renderTvScreen();
+          showToast("Foto enviada via Wi-Fi como papel de parede da TV!");
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById("btnApplyWallpaperUrl").addEventListener("click", () => {
+        const url = document.getElementById("wallpaperUrlInput").value.trim();
+        if (!url) return;
+        state.customWallpaperData = url;
+        saveState();
+        renderTvScreen();
+        showToast("Imagem de fundo por URL aplicada na TV!");
+      });
+
+      document.getElementById("dimRangeInput").addEventListener("input", (e) => {
+        state.dimPercent = parseInt(e.target.value, 10) || 0;
+        document.getElementById("dimValueLabel").textContent = state.dimPercent + "%";
+        renderTvScreen();
+      });
+
+      // Widgets Controls
+      document.getElementById("btnUpdateWidgets").addEventListener("click", () => {
+        state.roomName = document.getElementById("tvRoomNameInput").value.trim() || "Sala de Estar";
+        state.clock.enabled = document.getElementById("toggleClockInput").checked;
+        state.clock.format24h = document.getElementById("toggle24hInput").checked;
+        state.weather.enabled = document.getElementById("toggleWeatherInput").checked;
+        state.weather.city = document.getElementById("weatherCityInput").value.trim() || "São José dos Campos";
+        state.weather.temp = parseInt(document.getElementById("weatherTempInput").value, 10) || 25;
+        state.weather.unit = document.getElementById("weatherUnitSelect").value;
+        state.weather.icon = document.getElementById("weatherIconSelect").value;
+        saveState();
+        renderTvScreen();
+        showToast("Relógio e Clima atualizados na TV!");
+      });
+
+      // Messages & Links Controls
+      document.getElementById("btnSendTvMessage").addEventListener("click", () => {
+        const msg = document.getElementById("tvMessageInput").value.trim();
+        if (!msg) {
+          showToast("Digite uma mensagem para exibir na TV.");
+          return;
+        }
+        triggerTvBanner("Mensagem Recebida via Wi-Fi", msg, "💬");
+        showToast("Mensagem exibida na tela da TV!");
+      });
+
+      document.getElementById("btnOpenLinkNow").addEventListener("click", () => {
+        const url = document.getElementById("tvLinkUrlInput").value.trim();
+        const title = document.getElementById("tvLinkTitleInput").value.trim() || "Link Externo";
+        if (!url) {
+          showToast("Cole um link (URL) para abrir na TV.");
+          return;
+        }
+        triggerTvBanner("Abrindo Link Remoto na TV", `${title} → ${url}`, "🌐");
+        showToast("Comando de abertura de link enviado para a TV!");
+      });
+
+      document.getElementById("btnPinQuickLink").addEventListener("click", () => {
+        const url = document.getElementById("tvLinkUrlInput").value.trim();
+        const title = document.getElementById("tvLinkTitleInput").value.trim() || "Atalho Web";
+        if (!url) {
+          showToast("Informe o link (URL) para fixar na tela inicial.");
+          return;
+        }
+        state.quickLinks.push({
+          id: "ql-" + Date.now(),
+          title: title,
+          url: url
+        });
+        document.getElementById("tvLinkTitleInput").value = "";
+        document.getElementById("tvLinkUrlInput").value = "";
+        saveState();
+        renderQuickLinksManager();
+        renderTvScreen();
+        showToast(`Atalho "${title}" fixado na tela inicial da TV!`);
+      });
+
+      // Windows .BAT generator listeners
+      ["batTvIpInput", "chkDisableStockLauncher", "chkDisableRecommendations", "chkDisablePartnerCustomizer", "chkDisableTelemetry"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener("input", updateBatPreview);
+          el.addEventListener("change", updateBatPreview);
+        }
+      });
+
+      document.getElementById("btnCopyBatScript").addEventListener("click", () => {
+        const content = buildWindowsBatContent();
+        const tempArea = document.createElement("textarea");
+        tempArea.value = content;
+        document.body.appendChild(tempArea);
+        tempArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempArea);
+        showToast("Script .BAT copiado para a área de transferência!");
+      });
+
+      document.getElementById("btnDownloadBatScript").addEventListener("click", () => {
+        const content = buildWindowsBatContent();
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Instalar_e_Limpar_TV.bat";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("Download do arquivo Instalar_e_Limpar_TV.bat iniciado!");
+      });
+
+      // Initial render
+      renderCategoryDropdown();
+      renderAppsManagerList();
+      renderQuickLinksManager();
+      renderTvScreen();
+      updateBatPreview();
+    });
+  </script>
+</body>
+</html>
